@@ -10,9 +10,9 @@ namespace APIClients {
         
         public static async Task<Embed> GetLatestBuild() {
 
-            GitHubClient github = new GitHubClient(new ProductHeaderValue("Vita3KBot"));
+            GitHubClient github = new(new ProductHeaderValue("Vita3KBot"));
             Release latestRelease = await github.Repository.Release.Get("Vita3k", "Vita3k", "continuous");
-            string releaseTime = $"Published at {latestRelease.PublishedAt:u}";
+            long unixTime = latestRelease.PublishedAt.Value.ToUnixTimeSeconds();
             ReleaseAsset windowsRelease = latestRelease.Assets.Where(release => {
                 return release.Name.StartsWith("windows-latest");
             }).First();
@@ -31,7 +31,7 @@ namespace APIClients {
             GitHubCommit REF = await github.Repository.Commit.Get("Vita3k", "Vita3k", commit);
             Issue prInfo = await GetPRInfo(github, commit);
 
-            EmbedBuilder LatestBuild = new EmbedBuilder();
+            EmbedBuilder LatestBuild = new();
             if (prInfo != null) {
                 LatestBuild.WithTitle($"PR: #{prInfo.Number} By {prInfo.User.Login}")
                 .WithUrl(prInfo.HtmlUrl);
@@ -39,12 +39,12 @@ namespace APIClients {
                 LatestBuild.WithTitle($"Commit: {REF.Sha} By {REF.Commit.Author.Name}")
                 .WithUrl($"https://github.com/vita3k/vita3k/commit/{REF.Sha}");
             }
-            LatestBuild.WithDescription($"{REF.Commit.Message}")
+            LatestBuild.WithDescription($"**{REF.Commit.Message}**")
             .WithColor(Color.Orange)
             .AddField("Windows", $"[{windowsRelease.Name}]({windowsRelease.BrowserDownloadUrl})")
             .AddField("Linux", $"[{linuxRelease.Name}]({linuxRelease.BrowserDownloadUrl}), [{appimageRelease.Name}]({appimageRelease.BrowserDownloadUrl})")
             .AddField("Mac", $"[{macosRelease.Name}]({macosRelease.BrowserDownloadUrl})")
-            .WithFooter(releaseTime);
+            .AddField("\u200B", $"Built on: <t:{unixTime}:F> (<t:{unixTime}:R>)");
 
             return LatestBuild.Build();
         }
