@@ -10,9 +10,10 @@ namespace APIClients {
         
         public static async Task<Embed> GetLatestBuild() {
 
-            GitHubClient github = new GitHubClient(new ProductHeaderValue("Vita3KBot"));
+            GitHubClient github = new(new ProductHeaderValue("Vita3KBot"));
             Release latestRelease = await github.Repository.Release.Get("Vita3k", "Vita3k", "continuous");
-            string releaseTime = $"Published at {latestRelease.PublishedAt:u}";
+            long unixTime = latestRelease.PublishedAt.Value.ToUnixTimeSeconds();
+            string releaseTime = $"Published: <t:{unixTime}:F>";
             ReleaseAsset windowsRelease = latestRelease.Assets.Where(release => {
                 return release.Name.StartsWith("windows-latest");
             }).First();
@@ -31,7 +32,7 @@ namespace APIClients {
             GitHubCommit REF = await github.Repository.Commit.Get("Vita3k", "Vita3k", commit);
             Issue prInfo = await GetPRInfo(github, commit);
 
-            EmbedBuilder LatestBuild = new EmbedBuilder();
+            EmbedBuilder LatestBuild = new();
             if (prInfo != null) {
                 LatestBuild.WithTitle($"PR: #{prInfo.Number} By {prInfo.User.Login}")
                 .WithUrl(prInfo.HtmlUrl);
