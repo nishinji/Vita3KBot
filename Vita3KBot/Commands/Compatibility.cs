@@ -1,14 +1,13 @@
-using System;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Text;
-
+using APIClients;
 using Discord;
 using Discord.Commands;
-
-using APIClients;
 using Octokit;
+using System;
 using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Vita3KBot.Commands {
     [Group("compat")]
@@ -98,6 +97,17 @@ namespace Vita3KBot.Commands {
 
         [Command, Name("compat")]
         [Summary("Provides a compatibility report of the game.")]
+        public static string EscapeGitHubSearchQuery(string input)
+        {
+          if (string.IsNullOrWhiteSpace(input))
+            return input;
+
+          return Regex.Replace(
+              input,
+              @"([\\+\-=!(){}\[\]^""]|&&|\|\||>|<|~|\*|\?|:|/|&|#)",
+              "\\$1"
+          );
+        }
         public async Task Compatability([Remainder, Summary("Game name to search")]string keyword) {
             var github = new GitHubClient(new ProductHeaderValue("Vita3KBot"));
 
@@ -109,7 +119,7 @@ namespace Vita3KBot.Commands {
                 State = ItemState.Open,
             };
             
-            var keywords = keyword.ToLower().Split(' ');
+            var keywords = keyword.ToLower().Split(' ').Select(k => EscapeGitHubSearchQuery(k));
             var searchResults = (await github.Search.SearchIssues(search)).Items;
             // The following makes sure all the keywords are contained in each title, and removes the ones that don't.
             var filteredResults = searchResults.Where(
