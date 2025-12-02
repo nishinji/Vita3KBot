@@ -1,0 +1,12 @@
+# Set update schedule for .NET
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every week
+      interval: "weekly"
+    groups:
+      ci-deps:
+        patterns:
+          - "*"
