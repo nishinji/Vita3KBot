@@ -30,28 +30,47 @@ namespace Vita3KBot {
                 await Task.Delay(Timeout.Infinite);
             }
         }
-        
-        private Bot(string token) {
-            _token = token;
+
+        private Bot(string token)
+        {
+          _token = token;
         }
-        
-        public static void Main(string[] args) {
+
+        public static void Main(string[] args)
+        {
             // Init command with token.
-            if (args.Length >= 2 && args[0] == "init") {
-                File.WriteAllText("token.txt", args[1]);
+            if (args.Length >= 2 && args[0] == "init")
+            {
+              File.WriteAllText("token.txt", args[1]);
+              Console.WriteLine("Token saved to token.txt");
+              return;
             }
-            
-            // Start bot with token from "token.txt" in working folder.
-            try {
-                var bot = new Bot(File.ReadAllText("token.txt"));
-                bot.Start().GetAwaiter().GetResult();
-            } catch (IOException) {
-                Console.WriteLine("Could not read from token.txt. Did you run `init <token>`?");
+
+            try
+            {
+              string? token = Environment.GetEnvironmentVariable("TOKEN");
+
+              // If env not set → fallback to file
+              if (string.IsNullOrWhiteSpace(token))
+              {
+                token = File.ReadAllText("token.txt").Trim();
+              }
+
+              var bot = new Bot(token);
+              bot.Start().GetAwaiter().GetResult();
+            }
+            catch (IOException)
+            {
+              Console.WriteLine("Could not read token.txt and TOKEN env not set.");
+            }
+            catch (Exception ex)
+            {
+              Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
-        // Called by Discord.Net when it wants to log something.
-        private Task LogAsync(LogMessage log) {
+    // Called by Discord.Net when it wants to log something.
+    private Task LogAsync(LogMessage log) {
             Console.WriteLine(log.ToString());
 
             return Task.CompletedTask;
