@@ -2,25 +2,29 @@ name: Build Vita3KBot
 
 on:
   push:
-    branches: [ master ]
   pull_request:
   workflow_dispatch:
 
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Build Docker image
+        run: docker build -t vita3kbot .
+
+      - name: Create container
+        run: docker create --name vita3kbot_container vita3kbot
+
+      - name: Copy publish folder from container
+        run: |
+          docker cp vita3kbot_container:/app ./publish
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v5
         with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+          name: Vita3KBot
+          path: publish
